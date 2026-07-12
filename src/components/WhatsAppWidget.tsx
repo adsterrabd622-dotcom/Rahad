@@ -19,7 +19,7 @@ export default function WhatsAppWidget() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end pointer-events-none">
+    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end pointer-events-none">
       
       {/* 1. Interactive Greeting Card / Popup */}
       <AnimatePresence>
@@ -29,7 +29,7 @@ export default function WhatsAppWidget() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 15, scale: 0.95 }}
             transition={{ type: 'spring', damping: 20, stiffness: 300 }}
-            className="w-72 sm:w-80 bg-brand-slate border border-brand-accent/20 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto mb-4"
+            className="w-[calc(100vw-2rem)] max-w-[320px] sm:w-80 bg-brand-slate border border-brand-accent/20 rounded-2xl shadow-2xl overflow-hidden pointer-events-auto mb-4"
           >
             {/* Header with photographer avatar */}
             <div className="p-4 bg-brand-dark border-b border-brand-accent/15 flex items-center justify-between">
@@ -88,9 +88,9 @@ export default function WhatsAppWidget() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 20 }}
-            className="flex items-center space-x-2 bg-brand-accent/95 backdrop-blur-md text-brand-dark font-sans text-[11px] font-bold tracking-wide uppercase px-3 py-2 rounded-lg shadow-xl pointer-events-auto mb-3 border border-brand-accent/30"
+            className="flex items-center space-x-2 bg-brand-accent/95 backdrop-blur-md text-brand-dark font-sans text-[10px] sm:text-[11px] font-bold tracking-wide uppercase px-3 py-2 rounded-lg shadow-xl pointer-events-auto mb-3 border border-brand-accent/30 max-w-[calc(100vw-2rem)]"
           >
-            <span>Need photography service? Let&apos;s chat!</span>
+            <span className="truncate">Need photography service? Let&apos;s chat!</span>
             <button
               onClick={(e) => {
                 e.stopPropagation();

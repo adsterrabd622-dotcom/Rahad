@@ -213,7 +213,7 @@ export default function InteractiveStudio() {
               </div>
 
               {/* Status Tags */}
-              <div className="absolute bottom-4 left-4 z-10 flex items-center space-x-2">
+              <div className="absolute top-4 left-4 z-20 flex items-center space-x-2">
                 <span className="px-2 py-0.5 text-[8px] uppercase tracking-widest font-mono font-bold bg-brand-slate/95 backdrop-blur text-brand-accent rounded shadow-sm border border-brand-accent/20">
                   {showOriginal ? 'Original RAW' : 'Custom Developed'}
                 </span>

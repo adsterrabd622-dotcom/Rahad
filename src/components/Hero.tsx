@@ -157,7 +157,7 @@ export default function Hero() {
                   <p className="text-2xl sm:text-3xl font-serif font-bold text-brand-accent">150+</p>
                   <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold mt-1">Bookings Completed</p>
                 </div>
-                <div className="text-center p-2 border-r border-zinc-800/60 md:border-r-0">
+                <div className="text-center p-2 border-r border-zinc-800/60">
                   <p className="text-2xl sm:text-3xl font-serif font-bold text-brand-accent">5 ★</p>
                   <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold mt-1">Customer Reviews</p>
                 </div>
