@@ -113,7 +113,7 @@ export default function InteractiveStudio() {
   };
 
   return (
-    <section id="sandbox" className="py-24 bg-brand-slate relative border-t border-zinc-900">
+    <section id="sandbox" className="py-24 bg-brand-slate relative border-t border-zinc-900 overflow-hidden">
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         

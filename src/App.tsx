@@ -41,7 +41,7 @@ export default function App() {
   };
 
   return (
-    <div className="bg-brand-dark min-h-screen text-zinc-100 flex flex-col justify-between selection:bg-brand-accent selection:text-brand-dark">
+    <div className="bg-brand-dark min-h-screen text-zinc-100 flex flex-col justify-between selection:bg-brand-accent selection:text-brand-dark overflow-x-hidden w-full relative">
       {/* 1. Header Navigation */}
       <Header />
 
@@ -61,7 +61,7 @@ export default function App() {
       <Booking />
 
       {/* 6. Testimonial Section */}
-      <section className="py-24 bg-brand-dark/95 border-t border-brand-accent/15 relative">
+      <section className="py-24 bg-brand-dark/95 border-t border-brand-accent/15 relative overflow-hidden">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           
           {/* Section Header */}
