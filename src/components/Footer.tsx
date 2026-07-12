@@ -90,8 +90,8 @@ export default function Footer() {
             <p className="text-[11px] text-zinc-500 font-mono font-bold">
               &copy; {currentYear} RH Rahad Hasan. All Rights Reserved.
             </p>
-            <p className="text-[9px] text-zinc-500 font-sans tracking-wide">
-              Crafted beautifully with high-contrast fine art display layouts.
+            <p className="text-[10px] text-zinc-500 font-sans tracking-wide">
+              Developed by <span className="text-brand-accent font-mono font-bold">Sakib Hossain</span> &bull; Crafted beautifully with high-contrast fine art display layouts.
             </p>
           </div>
 

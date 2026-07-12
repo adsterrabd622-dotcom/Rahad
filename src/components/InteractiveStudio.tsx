@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, ChangeEvent } from 'react';
 import { motion } from 'motion/react';
-import { Sliders, RefreshCw, Sparkles, Image as ImageIcon, Eye, Copy, Check, Type } from 'lucide-react';
+import { Sliders, RefreshCw, Sparkles, Image as ImageIcon, Eye, Copy, Check, Type, Upload, Download, Loader2 } from 'lucide-react';
 import { PHOTO_DATA } from '../data';
 
 interface Preset {
@@ -12,11 +12,28 @@ interface Preset {
   blur: number;
   vignette: number;
   grayscale: boolean;
+  highlights: number;
+  shadows: number;
+  vibrance: number;
+  tint: number;
+  clarity: number;
+  dehaze: number;
 }
 
 export default function InteractiveStudio() {
+  const [customPhotos, setCustomPhotos] = useState<any[]>([]);
+  
+  const allPhotos = useMemo(() => {
+    return [...PHOTO_DATA, ...customPhotos];
+  }, [customPhotos]);
+
   const [selectedPhoto, setSelectedPhoto] = useState(PHOTO_DATA[0]);
   
+  // Lightroom Tab State
+  const [activeTab, setActiveTab] = useState<'light' | 'color' | 'effects' | 'overlay'>('light');
+  const [isExporting, setIsExporting] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // States for Lightroom sliders
   const [exposure, setExposure] = useState<number>(0); // -100 to 100
   const [contrast, setContrast] = useState<number>(100); // 50 to 150
@@ -26,6 +43,14 @@ export default function InteractiveStudio() {
   const [vignette, setVignette] = useState<number>(0); // 0 to 100
   const [grayscale, setGrayscale] = useState<boolean>(false);
   
+  // Advanced Lightroom Controls
+  const [highlights, setHighlights] = useState<number>(0); // -100 to 100
+  const [shadows, setShadows] = useState<number>(0); // -100 to 100
+  const [vibrance, setVibrance] = useState<number>(0); // -100 to 100
+  const [tint, setTint] = useState<number>(0); // -100 to 100
+  const [clarity, setClarity] = useState<number>(0); // -100 to 100
+  const [dehaze, setDehaze] = useState<number>(0); // -100 to 100
+
   // Interactive "Before & After" compare mode
   const [showOriginal, setShowOriginal] = useState<boolean>(false);
   const [copiedPresetCode, setCopiedPresetCode] = useState<boolean>(false);
@@ -35,12 +60,12 @@ export default function InteractiveStudio() {
   const [overlayTitle2, setOverlayTitle2] = useState('');
 
   const presets: Record<string, Preset> = {
-    raw: { name: 'Default RAW', exposure: 0, contrast: 100, saturation: 100, warmth: 0, blur: 0, vignette: 0, grayscale: false },
-    moody: { name: 'Moody Noir', exposure: -25, contrast: 130, saturation: 60, warmth: -20, blur: 0, vignette: 45, grayscale: false },
-    vintage: { name: 'Warm Analog', exposure: 5, contrast: 90, saturation: 110, warmth: 35, blur: 1, vignette: 30, grayscale: false },
-    mono: { name: 'B&W Contrast', exposure: 10, contrast: 145, saturation: 100, warmth: 0, blur: 0, vignette: 25, grayscale: true },
-    pop: { name: 'Vivid Pop', exposure: 15, contrast: 115, saturation: 150, warmth: 10, blur: 0, vignette: 10, grayscale: false },
-    dreamy: { name: 'Ethereal Mist', exposure: 20, contrast: 85, saturation: 90, warmth: 15, blur: 4, vignette: 20, grayscale: false },
+    raw: { name: 'Default RAW', exposure: 0, contrast: 100, saturation: 100, warmth: 0, blur: 0, vignette: 0, grayscale: false, highlights: 0, shadows: 0, vibrance: 0, tint: 0, clarity: 0, dehaze: 0 },
+    moody: { name: 'Moody Noir', exposure: -25, contrast: 130, saturation: 65, warmth: -20, blur: 0, vignette: 45, grayscale: false, highlights: -15, shadows: 20, vibrance: -10, tint: 10, clarity: 15, dehaze: 10 },
+    vintage: { name: 'Warm Analog', exposure: 5, contrast: 90, saturation: 110, warmth: 35, blur: 1, vignette: 30, grayscale: false, highlights: 10, shadows: -10, vibrance: 20, tint: -5, clarity: -10, dehaze: -5 },
+    mono: { name: 'B&W Contrast', exposure: 10, contrast: 145, saturation: 100, warmth: 0, blur: 0, vignette: 25, grayscale: true, highlights: 25, shadows: -15, vibrance: 0, tint: 0, clarity: 30, dehaze: 15 },
+    pop: { name: 'Vivid Pop', exposure: 15, contrast: 115, saturation: 140, warmth: 10, blur: 0, vignette: 10, grayscale: false, highlights: 15, shadows: -5, vibrance: 40, tint: 5, clarity: 10, dehaze: 5 },
+    dreamy: { name: 'Ethereal Mist', exposure: 20, contrast: 85, saturation: 90, warmth: 15, blur: 4, vignette: 20, grayscale: false, highlights: -20, shadows: 15, vibrance: -15, tint: -10, clarity: -30, dehaze: -20 },
   };
 
   const applyPreset = (presetKey: keyof typeof presets) => {
@@ -52,6 +77,12 @@ export default function InteractiveStudio() {
     setBlur(p.blur);
     setVignette(p.vignette);
     setGrayscale(p.grayscale);
+    setHighlights(p.highlights);
+    setShadows(p.shadows);
+    setVibrance(p.vibrance);
+    setTint(p.tint);
+    setClarity(p.clarity);
+    setDehaze(p.dehaze);
   };
 
   const resetSliders = () => applyPreset('raw');
@@ -60,40 +91,69 @@ export default function InteractiveStudio() {
   const filterStyle = useMemo(() => {
     if (showOriginal) return {};
     
-    // Convert exposure from percentage (-100 to 100) to brightness scale (0.5 to 1.5)
-    const brightness = 1 + exposure / 200;
+    // Convert exposure, highlights, shadows, dehaze into active brightness multiplier
+    const bValue = 1 + (exposure / 200) + (highlights / 400) + (shadows / 600) + (dehaze > 0 ? -dehaze / 300 : 0);
+    
+    // Contrast adjusted by contrast slider, highlights, shadows, clarity and dehaze
+    const cValue = 100 + (contrast - 100) + (highlights / 2) - (shadows / 2) + (clarity * 0.3) + (dehaze * 0.4);
+    
+    // Saturation boosted by saturation slider, vibrance, and dehaze
+    const sValue = grayscale ? 0 : (saturation + (vibrance * 0.7) + (dehaze * 0.3));
     
     // Grayscale
     const grayVal = grayscale ? 100 : 0;
 
     return {
       filter: `
-        brightness(${brightness}) 
-        contrast(${contrast}%) 
-        saturate(${grayscale ? 0 : saturation}%) 
+        brightness(${bValue}) 
+        contrast(${cValue}%) 
+        saturate(${sValue}%) 
         blur(${blur}px) 
         grayscale(${grayVal}%)
       `,
     };
-  }, [exposure, contrast, saturation, blur, grayscale, showOriginal]);
+  }, [exposure, contrast, saturation, blur, grayscale, showOriginal, highlights, shadows, vibrance, clarity, dehaze]);
 
-  // Compute Warmth/Tint overlay
-  const warmthOverlayStyle = useMemo(() => {
-    if (showOriginal || warmth === 0) return { opacity: 0 };
-    const color = warmth > 0 ? 'rgba(212, 175, 55, 0.12)' : 'rgba(59, 130, 246, 0.1)';
-    const intensity = Math.abs(warmth) / 100;
+  // Compute Warmth & Tint blend overlay
+  const colorOverlayStyle = useMemo(() => {
+    if (showOriginal) return { opacity: 0 };
+    if (warmth === 0 && tint === 0) return { opacity: 0 };
+
+    let r = 0, g = 0, b = 0;
+    
+    // Warmth: Warm amber vs Cool blue
+    if (warmth > 0) { r += 245; g += 158; b += 11; }
+    else if (warmth < 0) { r += 59; g += 130; b += 246; }
+    
+    // Tint: Magenta vs Green
+    if (tint > 0) { r += 236; g += 72; b += 153; }
+    else if (tint < 0) { r += 16; g += 185; b += 129; }
+
+    const hasWarmth = warmth !== 0;
+    const hasTint = tint !== 0;
+    if (hasWarmth && hasTint) {
+      r = Math.round(r / 2);
+      g = Math.round(g / 2);
+      b = Math.round(b / 2);
+    }
+
+    const maxOpacity = 0.22; // Maximum blend intensity
+    const warmthIntensity = Math.abs(warmth) / 100;
+    const tintIntensity = Math.abs(tint) / 100;
+    const intensity = Math.max(warmthIntensity, tintIntensity) * maxOpacity;
+
     return {
-      backgroundColor: color,
+      backgroundColor: `rgb(${r}, ${g}, ${b})`,
       opacity: intensity,
     };
-  }, [warmth, showOriginal]);
+  }, [warmth, tint, showOriginal]);
 
   // Compute Vignette style
   const vignetteOverlayStyle = useMemo(() => {
     if (showOriginal || vignette === 0) return { opacity: 0 };
     const intensity = vignette / 100;
     return {
-      background: `radial-gradient(circle, transparent 40%, rgba(0,0,0,${intensity * 0.9}) 100%)`,
+      background: `radial-gradient(circle, transparent 40%, rgba(0,0,0,${intensity * 0.95}) 100%)`,
     };
   }, [vignette, showOriginal]);
 
@@ -102,7 +162,13 @@ export default function InteractiveStudio() {
   exposure: ${exposure},
   contrast: ${contrast},
   saturation: ${saturation},
+  highlights: ${highlights},
+  shadows: ${shadows},
+  vibrance: ${vibrance},
   warmth: ${warmth},
+  tint: ${tint},
+  clarity: ${clarity},
+  dehaze: ${dehaze},
   blur: ${blur},
   vignette: ${vignette},
   grayscale: ${grayscale}
@@ -110,6 +176,170 @@ export default function InteractiveStudio() {
     navigator.clipboard.writeText(configString);
     setCopiedPresetCode(true);
     setTimeout(() => setCopiedPresetCode(false), 2000);
+  };
+
+  // Image Upload Handler
+  const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const url = URL.createObjectURL(file);
+    const newPhoto = {
+      id: `upload-${Date.now()}`,
+      title: file.name.split('.')[0]?.substring(0, 20) || 'Custom Upload',
+      url: url,
+      exif: {
+        focalLength: 'Adaptive',
+        aperture: 'F/1.8',
+        shutterSpeed: '1/250s',
+        iso: 'Auto'
+      },
+      category: 'custom'
+    };
+
+    setCustomPhotos(prev => [newPhoto, ...prev]);
+    setSelectedPhoto(newPhoto);
+  };
+
+  // High-Fidelity Custom Download Handler
+  const downloadEditedPhoto = () => {
+    if (isExporting) return;
+    setIsExporting(true);
+
+    const img = new Image();
+    // Enable cross-origin for local server images
+    img.crossOrigin = 'anonymous';
+    img.src = selectedPhoto.url;
+
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || img.width;
+        canvas.height = img.naturalHeight || img.height;
+        const ctx = canvas.getContext('2d');
+
+        if (!ctx) {
+          setIsExporting(false);
+          alert('Could not render photo editing context.');
+          return;
+        }
+
+        // Apply filters directly onto high-res canvas
+        const bValue = 1 + (exposure / 200) + (highlights / 400) + (shadows / 600) + (dehaze > 0 ? -dehaze / 300 : 0);
+        const cValue = 100 + (contrast - 100) + (highlights / 2) - (shadows / 2) + (clarity * 0.3) + (dehaze * 0.4);
+        const sValue = grayscale ? 0 : (saturation + (vibrance * 0.7) + (dehaze * 0.3));
+        
+        // Scale blur dynamically to match high-resolution image size
+        const scaleFactor = Math.max(1, (canvas.width / 800));
+        const blurValue = blur * scaleFactor;
+        const grayValue = grayscale ? 100 : 0;
+
+        ctx.filter = `brightness(${bValue}) contrast(${cValue}%) saturate(${sValue}%) blur(${blurValue}px) grayscale(${grayValue}%)`;
+        
+        // Draw image under Lightroom filter
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        
+        // Reset filter before blending non-native overlay effects
+        ctx.filter = 'none';
+
+        // 1. Blend Warmth & Tint Layer
+        if (!grayscale && (warmth !== 0 || tint !== 0)) {
+          let r = 0, g = 0, b = 0;
+          if (warmth > 0) { r += 245; g += 158; b += 11; }
+          else if (warmth < 0) { r += 59; g += 130; b += 246; }
+          
+          if (tint > 0) { r += 236; g += 72; b += 153; }
+          else if (tint < 0) { r += 16; g += 185; b += 129; }
+
+          const hasWarmth = warmth !== 0;
+          const hasTint = tint !== 0;
+          if (hasWarmth && hasTint) {
+            r = Math.round(r / 2);
+            g = Math.round(g / 2);
+            b = Math.round(b / 2);
+          }
+
+          const maxOpacity = 0.22;
+          const warmthIntensity = Math.abs(warmth) / 100;
+          const tintIntensity = Math.abs(tint) / 100;
+          const intensity = Math.max(warmthIntensity, tintIntensity) * maxOpacity;
+
+          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${intensity})`;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // 2. Apply Custom Vignette
+        if (vignette > 0) {
+          const intensity = vignette / 100;
+          const cx = canvas.width / 2;
+          const cy = canvas.height / 2;
+          const rInner = Math.min(canvas.width, canvas.height) * 0.35;
+          const rOuter = Math.sqrt(cx * cx + cy * cy);
+
+          const grad = ctx.createRadialGradient(cx, cy, rInner, cx, cy, rOuter);
+          grad.addColorStop(0, 'transparent');
+          grad.addColorStop(1, `rgba(0,0,0,${intensity * 0.95})`);
+
+          ctx.fillStyle = grad;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // 3. Draw Cinematic Text Overlay
+        if (overlayTitle || overlayTitle2) {
+          const ribbonHeight = canvas.height * 0.12;
+          const ribbonY = canvas.height - ribbonHeight - (canvas.height * 0.08);
+
+          // Matte dark backing
+          ctx.fillStyle = 'rgba(10, 10, 10, 0.7)';
+          ctx.fillRect(0, ribbonY, canvas.width, ribbonHeight);
+
+          // Accent border lines
+          ctx.strokeStyle = 'rgba(212, 175, 55, 0.3)';
+          ctx.lineWidth = Math.max(2, Math.round(canvas.height * 0.0015));
+          ctx.beginPath();
+          ctx.moveTo(0, ribbonY);
+          ctx.lineTo(canvas.width, ribbonY);
+          ctx.moveTo(0, ribbonY + ribbonHeight);
+          ctx.lineTo(canvas.width, ribbonY + ribbonHeight);
+          ctx.stroke();
+
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          if (overlayTitle) {
+            const titleFontSize = Math.max(16, Math.round(canvas.height * 0.03));
+            ctx.font = `bold ${titleFontSize}px serif`;
+            ctx.fillStyle = '#D4AF37'; // Golden Accent
+            ctx.fillText(overlayTitle.toUpperCase(), canvas.width / 2, ribbonY + ribbonHeight * 0.36);
+          }
+
+          if (overlayTitle2) {
+            const subtitleFontSize = Math.max(10, Math.round(canvas.height * 0.015));
+            ctx.font = `${subtitleFontSize}px monospace`;
+            ctx.fillStyle = '#E4E4E7'; // Zinc-200
+            ctx.fillText(overlayTitle2.toUpperCase(), canvas.width / 2, ribbonY + ribbonHeight * 0.72);
+          }
+        }
+
+        // Export & download trigger
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+        const link = document.createElement('a');
+        link.download = `rahad_photography_${selectedPhoto.title.toLowerCase().replace(/[^a-z0-9]+/g, '_')}_edited.jpg`;
+        link.href = dataUrl;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (err) {
+        console.error('Export error: ', err);
+        alert('Could not download image. Please try uploading another photo or try again.');
+      }
+      setIsExporting(false);
+    };
+
+    img.onerror = () => {
+      setIsExporting(false);
+      alert('Error loading image source. Please try another image.');
+    };
   };
 
   return (
@@ -140,20 +370,38 @@ export default function InteractiveStudio() {
             
             {/* Top Toolbar */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-zinc-800">
-              <div className="flex items-center space-x-3 w-full sm:w-auto">
+              <div className="flex items-center space-x-2 w-full sm:w-auto overflow-x-auto no-scrollbar py-1">
                 <ImageIcon className="h-4 w-4 text-brand-accent shrink-0" />
                 <select
                   value={selectedPhoto.id}
                   onChange={(e) => {
-                    const found = PHOTO_DATA.find(p => p.id === e.target.value);
+                    const found = allPhotos.find(p => p.id === e.target.value);
                     if (found) setSelectedPhoto(found);
                   }}
-                  className="bg-zinc-900 border border-zinc-800 text-xs text-zinc-200 font-semibold px-2.5 py-1.5 rounded focus:outline-none focus:border-brand-accent transition-colors cursor-pointer w-full sm:w-auto"
+                  className="bg-zinc-900 border border-zinc-800 text-xs text-zinc-200 font-semibold px-2 py-1.5 rounded focus:outline-none focus:border-brand-accent transition-colors cursor-pointer w-full max-w-[140px] sm:max-w-xs shrink-0"
                 >
-                  {PHOTO_DATA.map(p => (
+                  {allPhotos.map(p => (
                     <option key={p.id} value={p.id} className="bg-brand-slate text-zinc-200">{p.title}</option>
                   ))}
                 </select>
+
+                {/* Upload own pic button */}
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center justify-center space-x-1 px-2.5 py-1.5 bg-brand-accent/15 border border-brand-accent/30 text-brand-accent hover:bg-brand-accent hover:text-brand-dark rounded text-[10px] uppercase tracking-widest font-mono font-bold transition-all duration-300 shrink-0"
+                  title="Upload and edit your own custom image"
+                >
+                  <Upload className="h-3.5 w-3.5" />
+                  <span className="hidden xs:inline">Upload Pic</span>
+                  <span className="inline xs:hidden">Upload</span>
+                </button>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleImageUpload}
+                  accept="image/*"
+                  className="hidden"
+                />
               </div>
 
               {/* Original/Compare Action */}
@@ -183,10 +431,10 @@ export default function InteractiveStudio() {
                   className="max-h-full max-w-full object-contain rounded shadow-md sandbox-image"
                 />
 
-                {/* Warmth tint layer overlay */}
+                {/* Warmth & Tint blend layer overlay */}
                 <div
                   className="absolute inset-0 pointer-events-none transition-all duration-100"
-                  style={warmthOverlayStyle}
+                  style={colorOverlayStyle}
                 />
 
                 {/* Vignette layer overlay */}
@@ -258,162 +506,314 @@ export default function InteractiveStudio() {
 
               <hr className="border-zinc-800" />
 
-              {/* Adjustment Sliders Stack */}
+              {/* Mobile Lightroom-style Tabbed Control Bar */}
               <div className="space-y-4">
-                <h3 className="text-xs font-mono uppercase tracking-widest text-zinc-400 font-bold flex items-center space-x-1.5">
-                  <Sliders className="h-4 w-4 text-brand-accent" />
-                  <span>Manual Adjustments</span>
-                </h3>
-
-                {/* Exposure */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-zinc-300 font-semibold">Exposure</span>
-                    <span className="text-brand-accent font-mono font-bold">{(exposure > 0 ? '+' : '') + exposure} EV</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="-80"
-                    max="80"
-                    value={exposure}
-                    onChange={(e) => setExposure(Number(e.target.value))}
-                    className="w-full accent-brand-accent h-1 bg-zinc-800 rounded"
-                  />
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-mono uppercase tracking-widest text-zinc-400 font-bold flex items-center space-x-1.5">
+                    <Sliders className="h-4 w-4 text-brand-accent" />
+                    <span>Adjustment Panel</span>
+                  </h3>
                 </div>
 
-                {/* Contrast */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-zinc-300 font-semibold">Contrast</span>
-                    <span className="text-brand-accent font-mono font-bold">{contrast}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="50"
-                    max="150"
-                    value={contrast}
-                    onChange={(e) => setContrast(Number(e.target.value))}
-                    className="w-full accent-brand-accent h-1 bg-zinc-800 rounded"
-                  />
+                {/* Scrollable Tab Row */}
+                <div className="flex border-b border-zinc-800 pb-2 overflow-x-auto no-scrollbar gap-1.5">
+                  {[
+                    { id: 'light', label: '💡 Light' },
+                    { id: 'color', label: '🎨 Color' },
+                    { id: 'effects', label: '✨ Effects' },
+                    { id: 'overlay', label: '📝 Text' },
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveTab(tab.id as any)}
+                      className={`px-3 py-1.5 rounded text-[10px] font-bold tracking-wider uppercase transition-all shrink-0 ${
+                        activeTab === tab.id
+                          ? 'bg-brand-accent text-brand-dark shadow-md'
+                          : 'bg-zinc-900/60 text-zinc-400 hover:text-zinc-200 border border-zinc-800/45'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
                 </div>
 
-                {/* Saturation */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-zinc-300 font-semibold">Color Saturation</span>
-                    <span className="text-brand-accent font-mono font-bold">{grayscale ? 0 : saturation}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="200"
-                    value={saturation}
-                    disabled={grayscale}
-                    onChange={(e) => setSaturation(Number(e.target.value))}
-                    className="w-full accent-brand-accent h-1 bg-zinc-800 rounded disabled:opacity-30"
-                  />
-                </div>
+                {/* Dynamic Content based on active tab */}
+                <div className="pt-2 min-h-[220px]">
+                  
+                  {/* LIGHT TAB */}
+                  {activeTab === 'light' && (
+                    <div className="space-y-4">
+                      {/* Exposure */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-zinc-300 font-semibold">Exposure</span>
+                          <span className="text-brand-accent font-mono font-bold">{(exposure > 0 ? '+' : '') + (exposure / 100).toFixed(2)} EV</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="-100"
+                          max="100"
+                          value={exposure}
+                          onChange={(e) => setExposure(Number(e.target.value))}
+                          className="w-full accent-brand-accent h-1 bg-zinc-800 rounded cursor-pointer"
+                        />
+                      </div>
 
-                {/* Warmth */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-zinc-300 font-semibold">Color Temp (Warmth)</span>
-                    <span className="text-brand-accent font-mono font-bold">{(warmth > 0 ? '+' : '') + warmth}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="-80"
-                    max="80"
-                    value={warmth}
-                    onChange={(e) => setWarmth(Number(e.target.value))}
-                    className="w-full accent-brand-accent h-1 bg-zinc-800 rounded"
-                  />
-                </div>
+                      {/* Contrast */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-zinc-300 font-semibold">Contrast</span>
+                          <span className="text-brand-accent font-mono font-bold">{contrast}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="50"
+                          max="150"
+                          value={contrast}
+                          onChange={(e) => setContrast(Number(e.target.value))}
+                          className="w-full accent-brand-accent h-1 bg-zinc-800 rounded cursor-pointer"
+                        />
+                      </div>
 
-                {/* Blur / Soft Mist */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-zinc-300 font-semibold">Dreamy Mist (Blur)</span>
-                    <span className="text-brand-accent font-mono font-bold">{blur} px</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="6"
-                    value={blur}
-                    onChange={(e) => setBlur(Number(e.target.value))}
-                    className="w-full accent-brand-accent h-1 bg-zinc-800 rounded"
-                  />
-                </div>
+                      {/* Highlights */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-zinc-300 font-semibold">Highlights</span>
+                          <span className="text-brand-accent font-mono font-bold">{(highlights > 0 ? '+' : '') + highlights}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="-100"
+                          max="100"
+                          value={highlights}
+                          onChange={(e) => setHighlights(Number(e.target.value))}
+                          className="w-full accent-brand-accent h-1 bg-zinc-800 rounded cursor-pointer"
+                        />
+                      </div>
 
-                {/* Vignette */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-zinc-300 font-semibold">Vignette Depth</span>
-                    <span className="text-brand-accent font-mono font-bold">{vignette}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="80"
-                    value={vignette}
-                    onChange={(e) => setVignette(Number(e.target.value))}
-                    className="w-full accent-brand-accent h-1 bg-zinc-800 rounded"
-                  />
-                </div>
+                      {/* Shadows */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-zinc-300 font-semibold">Shadows</span>
+                          <span className="text-brand-accent font-mono font-bold">{(shadows > 0 ? '+' : '') + shadows}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="-100"
+                          max="100"
+                          value={shadows}
+                          onChange={(e) => setShadows(Number(e.target.value))}
+                          className="w-full accent-brand-accent h-1 bg-zinc-800 rounded cursor-pointer"
+                        />
+                      </div>
+                    </div>
+                  )}
 
-                {/* Black and White Checkbox */}
-                <div className="flex items-center space-x-3 pt-2">
-                  <input
-                    type="checkbox"
-                    id="grayscale-check"
-                    checked={grayscale}
-                    onChange={(e) => setGrayscale(e.target.checked)}
-                    className="h-4 w-4 bg-zinc-800 border-zinc-700 rounded accent-brand-accent cursor-pointer"
-                  />
-                  <label htmlFor="grayscale-check" className="text-xs text-zinc-300 font-semibold select-none cursor-pointer">
-                    Toggle Dramatic Monochrome (B&amp;W)
-                  </label>
-                </div>
-              </div>
+                  {/* COLOR TAB */}
+                  {activeTab === 'color' && (
+                    <div className="space-y-4">
+                      {/* Temp / Warmth */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-zinc-300 font-semibold">Temp (Warmth)</span>
+                          <span className="text-brand-accent font-mono font-bold">{(warmth > 0 ? '+' : '') + warmth}</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="-100"
+                          max="100"
+                          value={warmth}
+                          onChange={(e) => setWarmth(Number(e.target.value))}
+                          className="w-full accent-brand-accent h-1 bg-zinc-800 rounded cursor-pointer"
+                        />
+                      </div>
 
-              <hr className="border-zinc-800" />
+                      {/* Tint */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-zinc-300 font-semibold">Tint (Magenta/Green)</span>
+                          <span className="text-brand-accent font-mono font-bold">{(tint > 0 ? '+' : '') + tint}</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="-100"
+                          max="100"
+                          value={tint}
+                          onChange={(e) => setTint(Number(e.target.value))}
+                          className="w-full accent-brand-accent h-1 bg-zinc-800 rounded cursor-pointer"
+                        />
+                      </div>
 
-              {/* Text Overlay customizer */}
-              <div className="space-y-4">
-                <h3 className="text-xs font-mono uppercase tracking-widest text-zinc-400 font-bold flex items-center space-x-1.5">
-                  <Type className="h-4 w-4 text-brand-accent" />
-                  <span>Cinematic Text Overlay</span>
-                </h3>
+                      {/* Vibrance */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-zinc-300 font-semibold">Vibrance</span>
+                          <span className="text-brand-accent font-mono font-bold">{(vibrance > 0 ? '+' : '') + vibrance}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="-100"
+                          max="100"
+                          value={vibrance}
+                          onChange={(e) => setVibrance(Number(e.target.value))}
+                          className="w-full accent-brand-accent h-1 bg-zinc-800 rounded cursor-pointer"
+                        />
+                      </div>
 
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <label className="text-[10px] text-zinc-400 font-mono font-bold uppercase tracking-wider block">Overlay Title (Title 1)</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. SOUVENIR OF LIGHT"
-                      value={overlayTitle}
-                      onChange={(e) => setOverlayTitle(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-100 placeholder-zinc-700 focus:outline-none focus:border-brand-accent transition-colors"
-                    />
-                  </div>
+                      {/* Saturation */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-zinc-300 font-semibold">Color Saturation</span>
+                          <span className="text-brand-accent font-mono font-bold">{grayscale ? 0 : saturation}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="200"
+                          value={saturation}
+                          disabled={grayscale}
+                          onChange={(e) => setSaturation(Number(e.target.value))}
+                          className="w-full accent-brand-accent h-1 bg-zinc-800 rounded cursor-pointer disabled:opacity-30"
+                        />
+                      </div>
 
-                  <div className="space-y-1">
-                    <label className="text-[10px] text-zinc-400 font-mono font-bold uppercase tracking-wider block">Overlay Subtitle (Title 2)</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. FINE-ART COLLECTION 2026"
-                      value={overlayTitle2}
-                      onChange={(e) => setOverlayTitle2(e.target.value)}
-                      className="w-full px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-100 placeholder-zinc-700 focus:outline-none focus:border-brand-accent transition-colors"
-                    />
-                  </div>
+                      {/* Monochrome */}
+                      <div className="flex items-center space-x-3 pt-2 border-t border-zinc-800/40">
+                        <input
+                          type="checkbox"
+                          id="grayscale-check"
+                          checked={grayscale}
+                          onChange={(e) => setGrayscale(e.target.checked)}
+                          className="h-4 w-4 bg-zinc-800 border-zinc-700 rounded accent-brand-accent cursor-pointer"
+                        />
+                        <label htmlFor="grayscale-check" className="text-xs text-zinc-300 font-semibold select-none cursor-pointer">
+                          Dramatic Monochrome (B&amp;W)
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* EFFECTS TAB */}
+                  {activeTab === 'effects' && (
+                    <div className="space-y-4">
+                      {/* Clarity */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-zinc-300 font-semibold">Clarity</span>
+                          <span className="text-brand-accent font-mono font-bold">{(clarity > 0 ? '+' : '') + clarity}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="-100"
+                          max="100"
+                          value={clarity}
+                          onChange={(e) => setClarity(Number(e.target.value))}
+                          className="w-full accent-brand-accent h-1 bg-zinc-800 rounded cursor-pointer"
+                        />
+                      </div>
+
+                      {/* Dehaze */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-zinc-300 font-semibold">Dehaze</span>
+                          <span className="text-brand-accent font-mono font-bold">{(dehaze > 0 ? '+' : '') + dehaze}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="-100"
+                          max="100"
+                          value={dehaze}
+                          onChange={(e) => setDehaze(Number(e.target.value))}
+                          className="w-full accent-brand-accent h-1 bg-zinc-800 rounded cursor-pointer"
+                        />
+                      </div>
+
+                      {/* Vignette */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-zinc-300 font-semibold">Vignette Depth</span>
+                          <span className="text-brand-accent font-mono font-bold">{vignette}%</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={vignette}
+                          onChange={(e) => setVignette(Number(e.target.value))}
+                          className="w-full accent-brand-accent h-1 bg-zinc-800 rounded cursor-pointer"
+                        />
+                      </div>
+
+                      {/* Blur */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-zinc-300 font-semibold">Dreamy Mist (Blur)</span>
+                          <span className="text-brand-accent font-mono font-bold">{blur} px</span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0"
+                          max="8"
+                          value={blur}
+                          onChange={(e) => setBlur(Number(e.target.value))}
+                          className="w-full accent-brand-accent h-1 bg-zinc-800 rounded cursor-pointer"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* OVERLAY TAB */}
+                  {activeTab === 'overlay' && (
+                    <div className="space-y-4">
+                      <p className="text-[10px] text-zinc-400 font-mono leading-relaxed bg-zinc-900/40 p-2.5 rounded border border-zinc-800">
+                        Add an elegant fine-art black-bar ribbon style title at the bottom of the photo, which is fully baked in when you export/download the image.
+                      </p>
+                      
+                      <div className="space-y-3">
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-zinc-400 font-mono font-bold uppercase tracking-wider block">Overlay Title (Title 1)</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. SOUVENIR OF LIGHT"
+                            value={overlayTitle}
+                            onChange={(e) => setOverlayTitle(e.target.value)}
+                            className="w-full px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-100 placeholder-zinc-700 focus:outline-none focus:border-brand-accent transition-colors"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-zinc-400 font-mono font-bold uppercase tracking-wider block">Overlay Subtitle (Title 2)</label>
+                          <input
+                            type="text"
+                            placeholder="e.g. FINE-ART COLLECTION 2026"
+                            value={overlayTitle2}
+                            onChange={(e) => setOverlayTitle2(e.target.value)}
+                            className="w-full px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-100 placeholder-zinc-700 focus:outline-none focus:border-brand-accent transition-colors"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                 </div>
               </div>
             </div>
 
             {/* Quick Actions Footer Panel */}
             <div className="pt-6 mt-6 border-t border-zinc-800 space-y-3">
+              <button
+                onClick={downloadEditedPhoto}
+                disabled={isExporting}
+                className="w-full py-3 bg-emerald-500 hover:bg-emerald-400 disabled:bg-zinc-800 text-brand-dark text-xs font-extrabold tracking-widest uppercase rounded transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
+              >
+                {isExporting ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-brand-dark" />
+                ) : (
+                  <Download className="h-4 w-4" />
+                )}
+                <span>{isExporting ? 'Exporting High-Res...' : 'Download Edited Photo'}</span>
+              </button>
+
               <button
                 onClick={copyPresetPresetValues}
                 className="w-full py-2.5 bg-brand-accent hover:bg-brand-accent-light text-xs font-bold tracking-widest uppercase text-brand-dark rounded transition-all duration-300 flex items-center justify-center space-x-2 shadow-lg"
