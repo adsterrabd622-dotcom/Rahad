@@ -172,8 +172,8 @@ export default function InteractiveStudio() {
             </div>
 
             {/* Live Interactive Sandbox Canvas */}
-            <div className="flex-1 my-6 relative overflow-hidden rounded-lg bg-brand-dark/40 flex items-center justify-center max-h-[50vh] sm:max-h-[60vh]">
-              <div className="relative max-h-[40vh] sm:max-h-[50vh] w-full h-full flex items-center justify-center">
+            <div className="flex-1 my-4 sm:my-6 relative overflow-hidden rounded-lg bg-brand-dark/40 flex items-center justify-center h-[320px] sm:h-[450px] lg:h-[550px] max-h-[50vh] sm:max-h-[60vh] w-full">
+              <div className="relative w-full h-full flex items-center justify-center p-2">
                 {/* Visual Image */}
                 <img
                   src={selectedPhoto.url}
