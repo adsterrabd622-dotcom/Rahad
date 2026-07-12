@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'motion/react';
-import { Sliders, RefreshCw, Sparkles, Image as ImageIcon, Eye, Copy, Check } from 'lucide-react';
+import { Sliders, RefreshCw, Sparkles, Image as ImageIcon, Eye, Copy, Check, Type } from 'lucide-react';
 import { PHOTO_DATA } from '../data';
 
 interface Preset {
@@ -29,6 +29,10 @@ export default function InteractiveStudio() {
   // Interactive "Before & After" compare mode
   const [showOriginal, setShowOriginal] = useState<boolean>(false);
   const [copiedPresetCode, setCopiedPresetCode] = useState<boolean>(false);
+
+  // Text overlay state
+  const [overlayTitle, setOverlayTitle] = useState('');
+  const [overlayTitle2, setOverlayTitle2] = useState('');
 
   const presets: Record<string, Preset> = {
     raw: { name: 'Default RAW', exposure: 0, contrast: 100, saturation: 100, warmth: 0, blur: 0, vignette: 0, grayscale: false },
@@ -190,6 +194,22 @@ export default function InteractiveStudio() {
                   className="absolute inset-0 pointer-events-none transition-all duration-100"
                   style={vignetteOverlayStyle}
                 />
+
+                {/* Custom Fine-Art Text Overlay */}
+                {(overlayTitle || overlayTitle2) && (
+                  <div className="absolute inset-x-0 bottom-6 z-20 flex flex-col items-center justify-center bg-black/60 backdrop-blur-xs py-2 px-4 border-y border-brand-accent/15 text-center select-none max-w-[85%] mx-auto pointer-events-none rounded-lg shadow-xl">
+                    {overlayTitle && (
+                      <h4 className="font-serif text-brand-accent text-sm sm:text-base font-bold tracking-widest uppercase">
+                        {overlayTitle}
+                      </h4>
+                    )}
+                    {overlayTitle2 && (
+                      <p className="font-mono text-[9px] text-zinc-300 tracking-wider mt-0.5 uppercase">
+                        {overlayTitle2}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Status Tags */}
@@ -354,6 +374,40 @@ export default function InteractiveStudio() {
                   <label htmlFor="grayscale-check" className="text-xs text-zinc-300 font-semibold select-none cursor-pointer">
                     Toggle Dramatic Monochrome (B&amp;W)
                   </label>
+                </div>
+              </div>
+
+              <hr className="border-zinc-800" />
+
+              {/* Text Overlay customizer */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-mono uppercase tracking-widest text-zinc-400 font-bold flex items-center space-x-1.5">
+                  <Type className="h-4 w-4 text-brand-accent" />
+                  <span>Cinematic Text Overlay</span>
+                </h3>
+
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-zinc-400 font-mono font-bold uppercase tracking-wider block">Overlay Title (Title 1)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. SOUVENIR OF LIGHT"
+                      value={overlayTitle}
+                      onChange={(e) => setOverlayTitle(e.target.value)}
+                      className="w-full px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-100 placeholder-zinc-700 focus:outline-none focus:border-brand-accent transition-colors"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-zinc-400 font-mono font-bold uppercase tracking-wider block">Overlay Subtitle (Title 2)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. FINE-ART COLLECTION 2026"
+                      value={overlayTitle2}
+                      onChange={(e) => setOverlayTitle2(e.target.value)}
+                      className="w-full px-3 py-1.5 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-100 placeholder-zinc-700 focus:outline-none focus:border-brand-accent transition-colors"
+                    />
+                  </div>
                 </div>
               </div>
             </div>

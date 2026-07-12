@@ -7,6 +7,8 @@ export default function Booking() {
   const [selectedPkg, setSelectedPkg] = useState<BookingPackage>(PACKAGES[0]);
   const [clientName, setClientName] = useState('');
   const [clientEmail, setClientEmail] = useState('');
+  const [shootTitle, setShootTitle] = useState('');
+  const [shootTitle2, setShootTitle2] = useState('');
   const [bookingDate, setBookingDate] = useState('');
   const [shootLocation, setShootLocation] = useState('Gafargaon, Mymensingh');
   const [customNotes, setCustomNotes] = useState('');
@@ -44,6 +46,8 @@ I would like to inquire about booking a photography session.
 ============================
 👤 *Client Name:* ${clientName}
 📧 *Email:* ${clientEmail || 'Not specified'}
+🏷️ *Shoot Title:* ${shootTitle || 'Not specified'}
+🏷️ *Alternative Title (Title 2):* ${shootTitle2 || 'Not specified'}
 📦 *Package Chosen:* ${selectedPkg.name}
 📅 *Preferred Date:* ${bookingDate || 'To be discussed'}
 📍 *Shoot Location:* ${shootLocation}
@@ -295,6 +299,32 @@ Please let me know your availability so we can finalize!`;
                   placeholder="e.g. rahad@example.com"
                   value={clientEmail}
                   onChange={(e) => setClientEmail(e.target.value)}
+                  className="w-full px-4 py-2 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-brand-accent transition-colors"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Shoot Title */}
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase font-mono tracking-widest text-zinc-400 font-bold block">Shoot / Event Title (Title 1)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Cinematic Wedding Shoot"
+                  value={shootTitle}
+                  onChange={(e) => setShootTitle(e.target.value)}
+                  className="w-full px-4 py-2 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-brand-accent transition-colors"
+                />
+              </div>
+
+              {/* Shoot Title 2 */}
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase font-mono tracking-widest text-zinc-400 font-bold block">Alternative Sub-concept (Title 2)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Traditional & Outdoor Focus"
+                  value={shootTitle2}
+                  onChange={(e) => setShootTitle2(e.target.value)}
                   className="w-full px-4 py-2 bg-zinc-900 border border-zinc-800 rounded text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-brand-accent transition-colors"
                 />
               </div>
