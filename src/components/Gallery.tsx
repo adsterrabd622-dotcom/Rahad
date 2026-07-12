@@ -26,7 +26,7 @@ export default function Gallery({ onPhotoSelect }: GalleryProps) {
   }, [selectedCategory, searchQuery]);
 
   return (
-    <section id="gallery" className="py-24 bg-brand-dark border-t border-zinc-900 relative">
+    <section id="gallery" className="py-24 bg-brand-dark border-t border-zinc-900 relative overflow-hidden">
       {/* Decorative subtle glowing backgrounds */}
       <div className="absolute top-1/4 left-1/10 w-96 h-96 bg-brand-accent/5 rounded-full filter blur-[120px] pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/10 w-96 h-96 bg-brand-accent-light/5 rounded-full filter blur-[120px] pointer-events-none" />

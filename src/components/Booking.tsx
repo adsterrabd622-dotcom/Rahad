@@ -73,7 +73,7 @@ Please let me know your availability so we can finalize!`;
   };
 
   return (
-    <section id="packages" className="py-24 bg-brand-dark relative border-t border-zinc-900">
+    <section id="packages" className="py-24 bg-brand-dark relative border-t border-zinc-900 overflow-hidden">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-brand-accent/3 rounded-full filter blur-[150px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
