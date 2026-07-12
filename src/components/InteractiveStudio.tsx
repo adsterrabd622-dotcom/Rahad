@@ -132,19 +132,19 @@ export default function InteractiveStudio() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
           
           {/* Left Panel: Preview Frame */}
-          <div className="lg:col-span-7 xl:col-span-8 flex flex-col justify-between p-6 bg-brand-slate border border-brand-accent/15 rounded-2xl shadow-xl min-h-[45vh] sm:min-h-[55vh] lg:min-h-0 select-none">
+          <div className="lg:col-span-7 xl:col-span-8 flex flex-col justify-between p-4 sm:p-6 bg-brand-slate border border-brand-accent/15 rounded-2xl shadow-xl min-h-[45vh] sm:min-h-[55vh] lg:min-h-0 select-none">
             
             {/* Top Toolbar */}
-            <div className="flex items-center justify-between pb-4 border-b border-zinc-800">
-              <div className="flex items-center space-x-3">
-                <ImageIcon className="h-4 w-4 text-brand-accent" />
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-zinc-800">
+              <div className="flex items-center space-x-3 w-full sm:w-auto">
+                <ImageIcon className="h-4 w-4 text-brand-accent shrink-0" />
                 <select
                   value={selectedPhoto.id}
                   onChange={(e) => {
                     const found = PHOTO_DATA.find(p => p.id === e.target.value);
                     if (found) setSelectedPhoto(found);
                   }}
-                  className="bg-zinc-900 border border-zinc-800 text-xs text-zinc-200 font-semibold px-2.5 py-1.5 rounded focus:outline-none focus:border-brand-accent transition-colors cursor-pointer"
+                  className="bg-zinc-900 border border-zinc-800 text-xs text-zinc-200 font-semibold px-2.5 py-1.5 rounded focus:outline-none focus:border-brand-accent transition-colors cursor-pointer w-full sm:w-auto"
                 >
                   {PHOTO_DATA.map(p => (
                     <option key={p.id} value={p.id} className="bg-brand-slate text-zinc-200">{p.title}</option>
@@ -159,7 +159,7 @@ export default function InteractiveStudio() {
                 onMouseLeave={() => setShowOriginal(false)}
                 onTouchStart={() => setShowOriginal(true)}
                 onTouchEnd={() => setShowOriginal(false)}
-                className="flex items-center space-x-1.5 px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded text-[10px] uppercase tracking-widest font-mono font-bold text-zinc-300 hover:text-white transition-all duration-300"
+                className="flex items-center justify-center space-x-1.5 px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 rounded text-[10px] uppercase tracking-widest font-mono font-bold text-zinc-300 hover:text-white transition-all duration-300 w-full sm:w-auto"
                 title="Hold to see original RAW file"
               >
                 <Eye className="h-3.5 w-3.5" />

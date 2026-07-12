@@ -149,19 +149,19 @@ export default function Hero() {
                 transition={{ duration: 0.6, delay: 0.1 }}
                 className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto mt-16 p-6 bg-brand-slate/50 rounded-xl border border-brand-accent/15 shadow-md backdrop-blur-sm"
               >
-                <div className="text-center p-2 border-r border-zinc-800 last:border-0">
+                <div className="text-center p-2 border-r border-zinc-800/60">
                   <p className="text-2xl sm:text-3xl font-serif font-bold text-brand-accent">500+</p>
                   <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold mt-1">Stunning Captures</p>
                 </div>
-                <div className="text-center p-2 border-r border-zinc-800 last:border-0">
+                <div className="text-center p-2 md:border-r md:border-zinc-800/60">
                   <p className="text-2xl sm:text-3xl font-serif font-bold text-brand-accent">150+</p>
                   <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold mt-1">Bookings Completed</p>
                 </div>
-                <div className="text-center p-2 border-r border-zinc-800 last:border-0">
+                <div className="text-center p-2 border-r border-zinc-800/60 md:border-r-0">
                   <p className="text-2xl sm:text-3xl font-serif font-bold text-brand-accent">5 ★</p>
                   <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold mt-1">Customer Reviews</p>
                 </div>
-                <div className="text-center p-2 last:border-0">
+                <div className="text-center p-2">
                   <p className="text-2xl sm:text-3xl font-serif font-bold text-brand-accent">Sony</p>
                   <p className="text-[10px] uppercase tracking-widest text-zinc-400 font-bold mt-1">Alpha 7 IV gear</p>
                 </div>

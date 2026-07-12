@@ -97,7 +97,7 @@ Please let me know your availability so we can finalize!`;
               <div
                 key={pkg.id}
                 onClick={() => setSelectedPkg(pkg)}
-                className={`relative p-8 rounded-2xl cursor-pointer transition-all duration-300 flex flex-col justify-between border ${
+                className={`relative p-6 sm:p-8 rounded-2xl cursor-pointer transition-all duration-300 flex flex-col justify-between border ${
                   isSelected
                     ? 'bg-brand-slate border-brand-accent shadow-brand-accent/10 shadow-2xl -translate-y-1'
                     : 'bg-brand-slate/40 border-zinc-800 hover:border-brand-accent/30 hover:-translate-y-0.5'
@@ -157,7 +157,7 @@ Please let me know your availability so we can finalize!`;
         </div>
 
         {/* Interactive Customizer & Booking Form */}
-        <div id="book" className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start bg-brand-slate border border-brand-accent/15 rounded-2xl p-6 sm:p-8 shadow-xl relative">
+        <div id="book" className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start bg-brand-slate border border-brand-accent/15 rounded-2xl p-4 sm:p-8 shadow-xl relative">
           
           {/* Form left Column: Customizer */}
           <div className="lg:col-span-5 space-y-6">

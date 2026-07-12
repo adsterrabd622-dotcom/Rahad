@@ -57,10 +57,10 @@ export default function Lightbox({ photo, onClose, onPrev, onNext }: LightboxPro
       </button>
 
       {/* Main Container Layout */}
-      <div className="w-full max-w-6xl bg-zinc-900/50 border border-zinc-800/80 rounded-2xl overflow-hidden shadow-2xl flex flex-col lg:flex-row relative z-10 max-h-[92vh] lg:max-h-[85vh]">
+      <div className="w-full max-w-6xl bg-zinc-900/50 border border-zinc-800/80 rounded-2xl overflow-y-auto lg:overflow-hidden shadow-2xl flex flex-col lg:flex-row relative z-10 max-h-[94vh] lg:max-h-[85vh]">
         
         {/* Left Interactive Image Display Panel */}
-        <div className="flex-1 relative bg-black/40 flex items-center justify-center min-h-[40vh] sm:min-h-[50vh] lg:min-h-0 select-none overflow-hidden group">
+        <div className="flex-shrink-0 lg:flex-1 relative bg-black/40 flex items-center justify-center min-h-[35vh] sm:min-h-[45vh] lg:min-h-0 select-none overflow-hidden group">
           
           {/* Main Visual Image */}
           <motion.img
@@ -71,7 +71,7 @@ export default function Lightbox({ photo, onClose, onPrev, onNext }: LightboxPro
             src={photo.url}
             alt={photo.title}
             referrerPolicy="no-referrer"
-            className="max-w-full max-h-[40vh] sm:max-h-[50vh] lg:max-h-[80vh] object-contain p-2"
+            className="max-w-full max-h-[30vh] sm:max-h-[45vh] lg:max-h-[80vh] object-contain p-2"
           />
 
           {/* Navigation Overlay Buttons */}
@@ -99,7 +99,7 @@ export default function Lightbox({ photo, onClose, onPrev, onNext }: LightboxPro
         </div>
 
         {/* Right Info & Lightroom EXIF Panel */}
-        <div className="w-full lg:w-[400px] border-t lg:border-t-0 lg:border-l border-zinc-800/80 bg-zinc-900 flex flex-col justify-between overflow-y-auto">
+        <div className="w-full lg:w-[400px] border-t lg:border-t-0 lg:border-l border-zinc-800/80 bg-zinc-900 flex flex-col justify-between overflow-visible lg:overflow-y-auto lg:max-h-full">
           
           {/* Header Description Section */}
           <div className="p-6 space-y-6">
